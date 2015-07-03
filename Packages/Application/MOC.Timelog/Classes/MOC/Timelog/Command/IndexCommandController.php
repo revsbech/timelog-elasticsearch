@@ -1,6 +1,7 @@
 <?php
 namespace MOC\Timelog\Command;
 
+use MOC\Timelog\ElasticSearch\WorkUnitMapping;
 use MOC\Timelog\ElasticSearch\WorkUnitType;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cli\CommandController;
@@ -24,21 +25,35 @@ class IndexCommandController extends CommandController {
 		$indexName = 'timelogdata';
 
 		$workUnitIndex = $client->findIndex($indexName);
-		$workUnitType = new WorkUnitType($workUnitIndex,'WorkUnit');
+		if (!$workUnitIndex->exists()) {
+			$workUnitIndex->create();
+		}
+		$workUnitIndex->request('POST', '_flush');
 
-		foreach (explode(PHP_EOL, $jsonData) as $line) {
-			$data = json_decode($line,TRUE);
+		$workUnitType = new WorkUnitType($workUnitIndex, 'WorkUnit');
+		$workUnitMapping = new WorkUnitMapping($workUnitType);
+		$workUnitMapping->setPropertyByPath('customerName', array('type' => 'string', 'index' => 'not_analyzed'));
+		$workUnitMapping->setPropertyByPath('employeeInitials', array('type' => 'string', 'index' => 'not_analyzed'));
+		$workUnitMapping->setPropertyByPath('employeeName', array('type' => 'string', 'index' => 'not_analyzed'));
+		$workUnitMapping->setPropertyByPath('projectName', array('type' => 'string', 'index' => 'not_analyzed'));
+		$workUnitMapping->apply();
+
+		$lines = explode(PHP_EOL, $jsonData);
+		$linesCount = count($lines);
+		$this->output->progressStart($linesCount);
+		foreach ($lines as $line) {
+			$data = json_decode($line, TRUE);
+			$this->output->progressAdvance();
 			if ($data !== NULL) {
 				try {
 					$document = new \Flowpack\ElasticSearch\Domain\Model\Document($workUnitType, $data);
 					$document->store();
 				} catch (\Exception $e) {
-					print "Error submitting entry to ES. Data: " . $line . PHP_EOL;
+					print 'Error submitting entry to ES. Data: ' . $line . PHP_EOL;
 				}
 			}
 		}
-
+		$this->output->progressFinish();
 	}
-
 
 }
