@@ -25,6 +25,7 @@ class IndexCommandController extends CommandController {
 		$indexName = 'timelogdata';
 
 		$workUnitIndex = $client->findIndex($indexName);
+
 		if (!$workUnitIndex->exists()) {
 			$workUnitIndex->create();
 		}

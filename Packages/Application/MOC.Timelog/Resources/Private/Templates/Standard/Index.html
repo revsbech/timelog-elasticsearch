@@ -3,13 +3,23 @@
 <f:section name="Title">Index view of Standard controller</f:section>
 
 <f:section name="Content">
-	<h1>A freshly created Fluid template!</h1>
-	<p>Some data set by the controller:</p>
-	<ul>
-		
-		<f:for each="{foos}" as="foo">
-			<li>{foo}</li>
-		</f:for>
-		
-	</ul>
+	<h1>Sum of invoided data</h1>
+	<div id="myfirstchart" style="height: 250px;"></div>
+<script>
+	var data = {f:format.json(value: data)};
+	new Morris.Bar({
+	  // ID of the element in which to draw the chart.
+	  element: 'myfirstchart',
+	  // Chart data records -- each entry in this array corresponds to a point on
+	  // the chart.
+	  data: data,
+	  // The name of the data record attribute that contains x-values.
+	  xkey: 'date',
+	  // A list of names of data record attributes that contain y-values.
+	  ykeys: ['value'],
+	  // Labels for the ykeys -- will be displayed when you hover over the
+	  // chart.
+	  labels: ['Value']
+	});
+	</script>
 </f:section>
